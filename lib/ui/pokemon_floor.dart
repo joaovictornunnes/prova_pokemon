@@ -1,8 +1,11 @@
-import 'package:floor/floor.dart';
-import 'pokemon.dart';
-import 'pokemon_dao.dart';
+import 'dart:async';
 
-part 'app_database.g.dart'; // the generated code will be there
+import 'package:floor/floor.dart';
+import '../domain/pokemon.dart';
+import '../ui/pokemonDao.dart';
+import 'package:sqflite/sqflite.dart' as sqflite;
+
+part 'pokemon_floor.g.dart';
 
 @Database(version: 1, entities: [Pokemon])
 abstract class AppDatabase extends FloorDatabase {
