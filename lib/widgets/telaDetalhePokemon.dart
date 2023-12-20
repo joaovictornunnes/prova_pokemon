@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../domain/pokemon.dart';
 import '../ui/pokemonDao.dart';
 import '../ui/pokemon_floor.dart';
-import 'telaSobre.dart'; // Importe a TelaSobre
+import 'telaSobre.dart';
 
 class TelaDetalhesPokemon extends StatefulWidget {
   final int id;
@@ -14,29 +14,29 @@ class TelaDetalhesPokemon extends StatefulWidget {
 }
 
 class _TelaDetalhesPokemonState extends State<TelaDetalhesPokemon> {
-  late Future<Pokemon>? futurePokemon;
-  late PokemonDao pokemonDao;
+  Future<Pokemon?>? futurePokemon;
+  late Future<PokemonDao> pokemonDao;
 
   @override
   void initState() {
     super.initState();
-    initializeDbAndDao();
-    futurePokemon = getPokemon();
+    pokemonDao = initializeDbAndDao();
+    pokemonDao.then((dao) {
+      setState(() {
+        futurePokemon = getPokemon(dao);
+      });
+    });
   }
 
-  void initializeDbAndDao() async {
+
+  Future<PokemonDao> initializeDbAndDao() async {
     final database = await $FloorAppDatabase.databaseBuilder('app_database.db').build();
-    pokemonDao = database.pokemonDao;
+    return database.pokemonDao;
   }
 
-  Future<Pokemon> getPokemon() async {
-    final pokemon = await pokemonDao.findPokemonById(widget.id);
-    if (pokemon != null) {
-      return pokemon;
-    } else {
-      throw Exception('Pokemon not found');
-    }
-  }
+  Future<Pokemon?> getPokemon(PokemonDao dao) async {
+  return dao.findPokemonById(widget.id);
+}
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +55,7 @@ class _TelaDetalhesPokemonState extends State<TelaDetalhesPokemon> {
           ),
         ],
       ),
-      body: FutureBuilder<Pokemon>(
+      body: FutureBuilder<Pokemon?>(
         future: futurePokemon,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -70,9 +70,17 @@ class _TelaDetalhesPokemonState extends State<TelaDetalhesPokemon> {
             // Se houver dados...
             return Column(
               children: <Widget>[
+                Image.network(
+                  'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${snapshot.data!.id}.png',
+                  height: 100,
+                  width: 100,
+                ),
                 Text('Nome: ${snapshot.data!.name}'),
                 Text('ID: ${snapshot.data!.id}'),
-                // Adicione mais detalhes sobre o Pokémon aqui...
+                Text('Base Experience: ${snapshot.data!.baseExperience}'),
+                Text('Altura: ${snapshot.data!.height}'),
+                Text('Peso: ${snapshot.data!.weight}'),
+                
               ],
             );
           }

@@ -68,8 +68,13 @@ class Pokemon {
       'url': url,
     };
   }
-  
+  @override
+  String toString() {
+    return 'Pokemon{id: $id, name: $name, baseExperience: $baseExperience, height: $height, isDefault: $isDefault, order: $order, weight: $weight, isCaptured: $isCaptured, url: $url}';
+  }
+
   void capture() {
     this.isCaptured = true;
   }
 }
+

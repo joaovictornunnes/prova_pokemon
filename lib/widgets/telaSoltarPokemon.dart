@@ -14,27 +14,38 @@ class TelaSoltarPokemon extends StatefulWidget {
 }
 
 class _TelaSoltarPokemonState extends State<TelaSoltarPokemon> {
-  late Future<Pokemon?> futurePokemon;
-  late PokemonDao pokemonDao;
+  Future<Pokemon?>? futurePokemon;
+  PokemonDao? pokemonDao;
 
   @override
   void initState() {
     super.initState();
-    initializeDbAndDao();
-    futurePokemon = getPokemon();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final database =
+          await $FloorAppDatabase.databaseBuilder('app_database.db').build();
+      pokemonDao = database.pokemonDao;
+      setState(() {
+        futurePokemon = getPokemon();
+      });
+    });
   }
 
   void initializeDbAndDao() async {
-    final database = await $FloorAppDatabase.databaseBuilder('app_database.db').build();
+    final database =
+        await $FloorAppDatabase.databaseBuilder('app_database.db').build();
     pokemonDao = database.pokemonDao;
+    futurePokemon = getPokemon();
   }
 
   Future<Pokemon?> getPokemon() async {
-    return pokemonDao.findPokemonById(widget.id);
+    print('Getting Pokemon with ID: ${widget.id}');
+    final pokemon = await pokemonDao!.findPokemonById(widget.id);
+    print('Got Pokemon: $pokemon');
+    return pokemon;
   }
 
   void deletePokemon(Pokemon pokemon) async {
-    await pokemonDao.deletePokemon(pokemon);
+    await pokemonDao!.deletePokemon(pokemon);
     Navigator.pop(context);
   }
 
@@ -69,9 +80,18 @@ class _TelaSoltarPokemonState extends State<TelaSoltarPokemon> {
               children: <Widget>[
                 Text('Nome: ${snapshot.data!.name}'),
                 Text('ID: ${snapshot.data!.id}'),
-                // Adicione a imagem do Pokémon aqui...
+                Image.network(
+                  'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${snapshot.data!.id}.png',
+                  height: 100,
+                  width: 100,
+                ),
+                Text('Nome: ${snapshot.data!.name}'),
+                Text('ID: ${snapshot.data!.id}'),
+                Text('Base Experience: ${snapshot.data!.baseExperience}'),
                 ElevatedButton(
-                  onPressed: () => deletePokemon(snapshot.data!),
+                  onPressed: () {
+                    deletePokemon(snapshot.data!);
+                  },
                   child: Text('Confirmar'),
                 ),
                 ElevatedButton(

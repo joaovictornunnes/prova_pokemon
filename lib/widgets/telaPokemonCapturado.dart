@@ -3,7 +3,7 @@ import '../ui/pokemon_floor.dart';
 import '../domain/pokemon.dart';
 import 'telaDetalhePokemon.dart';
 import 'telaSoltarPokemon.dart';
-import 'telaSobre.dart'; // Importe a TelaSobre
+import 'telaSobre.dart';
 
 class TelaPokemonCapturado extends StatefulWidget {
   @override
@@ -16,13 +16,21 @@ class _TelaPokemonCapturadoState extends State<TelaPokemonCapturado> {
   @override
   void initState() {
     super.initState();
-    futurePokemons = getPokemonsCapturados();
+    refreshPokemons();
   }
 
   Future<List<Pokemon>> getPokemonsCapturados() async {
-    final database = await $FloorAppDatabase.databaseBuilder('app_database.db').build();
+    final database =
+        await $FloorAppDatabase.databaseBuilder('app_database.db').build();
     final pokemonDao = database.pokemonDao;
-    return pokemonDao.findAllPokemons(); // Substitua por sua função que retorna apenas Pokémons capturados
+    return pokemonDao
+        .findAllPokemons(); // Substitua por sua função que retorna apenas Pokémons capturados
+  }
+
+  void refreshPokemons() {
+    setState(() {
+      futurePokemons = getPokemonsCapturados();
+    });
   }
 
   @override
@@ -62,17 +70,22 @@ class _TelaPokemonCapturadoState extends State<TelaPokemonCapturado> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => TelaDetalhesPokemon(id: snapshot.data![i].id),
+                      builder: (context) =>
+                          TelaDetalhesPokemon(id: snapshot.data![i].id),
                     ),
                   );
                 },
-                onLongPress: () {
-                  Navigator.push(
+                onLongPress: () async {
+                  final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => TelaSoltarPokemon(id: snapshot.data![i].id),
+                      builder: (context) =>
+                          TelaSoltarPokemon(id: snapshot.data![i].id),
                     ),
                   );
+                  if (result == true) {
+                    refreshPokemons();
+                  }
                 },
                 child: ListTile(
                   title: Text(snapshot.data![i].name),
@@ -84,5 +97,5 @@ class _TelaPokemonCapturadoState extends State<TelaPokemonCapturado> {
         },
       ),
     );
-  } 
+  }
 }

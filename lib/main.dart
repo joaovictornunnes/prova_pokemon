@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'ui/pokemon_floor.dart';
 import 'widgets/telaCaptura.dart';
 import 'widgets/telaPokemonCapturado.dart';
-import 'widgets/telaSobre.dart'; // Importe a TelaSobre
+import 'widgets/telaSobre.dart';
 
-void main() {
-  runApp(MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Necessário para usar async antes do runApp
+
+  final database = await $FloorAppDatabase.databaseBuilder('app_database.db').build();
+
+  runApp(
+    Provider<AppDatabase>(
+      create: (context) => database,
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -19,6 +30,8 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+// O restante do seu código vai aqui...
 
 class MyHomePage extends StatefulWidget {
   @override

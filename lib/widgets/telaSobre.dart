@@ -5,10 +5,15 @@ class TelaSobre extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Sobre'),
+        title: Text('Informações dos desenvolvedores'),
       ),
       body: Center(
-        child: Text('Informações sobre os(as) desenvolvedores(as) do aplicativo.'),
+        child: Column(
+          children: [
+            Text('Joao victor nunnes'),
+            Text('Lucas moura nascimento'),
+          ],
+        ),
       ),
     );
   }
