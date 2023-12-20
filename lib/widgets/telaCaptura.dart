@@ -8,29 +8,6 @@ import '../domain/pokemon.dart';
 import '../ui/pokemonDao.dart';
 import '../ui/pokemon_floor.dart';
 
-Future<Pokemon> fetchPokemonDetails(String url) async {
-  final response = await http.get(Uri.parse(url));
-
-  if (response.statusCode == 200) {
-    final Map<String, dynamic> pokemonData = jsonDecode(response.body);
-    return Pokemon.fromJson(pokemonData);
-  } else {
-    throw Exception('Failed to load Pokémon details');
-  }
-}
-
-Future<List<Pokemon>> fetchPokemonList(List<int> pokemonIds) async {
-  final List<Pokemon> pokemonList = [];
-
-  for (var id in pokemonIds) {
-    final url = 'https://pokeapi.co/api/v2/pokemon/$id';
-    final pokemon = await fetchPokemonDetails(url);
-    pokemonList.add(pokemon);
-  }
-
-  return pokemonList;
-}
-
 class TelaCaptura extends StatefulWidget {
   const TelaCaptura({Key? key}) : super(key: key);
 
@@ -39,22 +16,45 @@ class TelaCaptura extends StatefulWidget {
 }
 
 class _TelaCapturaState extends State<TelaCaptura> {
-  late Future<List<Pokemon>> futurePokemonList;
-  late PokemonDao pokemonDao;
+  late Future<List<Pokemon>> futurePokemonCollection;
+  late PokemonDao pokemonRepository;
+
   @override
   void initState() {
     super.initState();
-    _initializeDao();
-    // Gere 6 números aleatórios entre 0 e 1017
+    _setupDao();
     final List<int> randomPokemonIds =
         List.generate(6, (index) => Random().nextInt(1018));
-    futurePokemonList = fetchPokemonList(randomPokemonIds);
+    futurePokemonCollection = getPokemonList(randomPokemonIds);
   }
 
-  void _initializeDao() async {
+  void _setupDao() async {
     final database =
         await $FloorAppDatabase.databaseBuilder('app_database.db').build();
-    pokemonDao = database.pokemonDao;
+    pokemonRepository = database.pokemonDao;
+  }
+
+  Future<Pokemon> getPokemonDetails(String url) async {
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> pokemonData = jsonDecode(response.body);
+      return Pokemon.fromJson(pokemonData);
+    } else {
+      throw Exception('Failed to load Pokémon details');
+    }
+  }
+
+  Future<List<Pokemon>> getPokemonList(List<int> pokemonIds) async {
+    final List<Pokemon> pokemonCollection = [];
+
+    for (var id in pokemonIds) {
+      final url = 'https://pokeapi.co/api/v2/pokemon/$id';
+      final pokemon = await getPokemonDetails(url);
+      pokemonCollection.add(pokemon);
+    }
+
+    return pokemonCollection;
   }
 
   @override
@@ -65,7 +65,7 @@ class _TelaCapturaState extends State<TelaCaptura> {
       ),
       body: Center(
         child: FutureBuilder<List<Pokemon>>(
-          future: futurePokemonList,
+          future: futurePokemonCollection,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               return ListView.builder(
@@ -80,31 +80,24 @@ class _TelaCapturaState extends State<TelaCaptura> {
                           'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png',
                           height: 100,
                           width: 100,
-                        ), // Adjust the size as needed
+                        ),
                         Text('Name: ${pokemon.name}'),
                         Text('ID: ${pokemon.id}'),
                         Text(
                             'Base Experience: ${pokemon.baseExperience.toString()}'),
                         GestureDetector(
                           onTap: () async {
-                            // Marque o Pokémon como capturado
                             pokemon.capture();
-
-                            // Verifique se o Pokémon já existe no banco de dados
                             final existingPokemon =
-                                await pokemonDao.findPokemonById(pokemon.id);
-
-                            // Se o Pokémon não existir, insira-o no banco de dados
+                                await pokemonRepository.findPokemonById(pokemon.id);
                             if (existingPokemon == null) {
-                              await pokemonDao.insertPokemon(pokemon);
+                              await pokemonRepository.insertPokemon(pokemon);
                             }
-
-                            // Atualize a UI se necessário
                             setState(() {});
                           },
                           child: Image.asset(
                             'assets/icon/pokebola.png',
-                            height: 50, // Adjust the size as needed
+                            height: 50,
                             width: 50,
                           ),
                         ),
